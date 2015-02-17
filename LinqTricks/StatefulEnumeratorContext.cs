@@ -9,15 +9,12 @@ namespace LinqTricks
 
         private bool _done;
 
-        private bool _hasNext;
-
         private Queue<T> _pending = new Queue<T>();
 
         public StatefulEnumeratorContext(IEnumerator<T> enumerator)
         {
             _enumerator = enumerator;
             _done = !enumerator.MoveNext();
-            _hasNext = !_done;
         }
 
         public bool IsDone()
@@ -28,36 +25,6 @@ namespace LinqTricks
         public IEnumerable<T> CompensateOne()
         {
             return Compensate(1);
-        }
-
-        public IEnumerable<T> CompensateOneX()
-        {
-            var last = default(T);
-            bool lastWasPending = false;
-            try
-            {
-                while (_pending.Count > 0)
-                {
-                    lastWasPending = true;
-                    yield return last = _pending.Dequeue();
-                }
-
-                while (!_done)
-                {
-                    lastWasPending = false;
-                    yield return last = _enumerator.Current;
-                    _done = !_enumerator.MoveNext();
-                }
-            }
-            finally
-            {
-                if (!_done)
-                {
-                    _pending.Enqueue(last);
-                }
-                if (!lastWasPending)
-                    _done = !_enumerator.MoveNext();
-            }
         }
 
         public IEnumerable<T> Compensate(int balance)
@@ -92,11 +59,6 @@ namespace LinqTricks
             }
             finally
             {
-                //if (!_done)
-                //{
-                //    _pending.Enqueue(last);
-                //}
-                
                 if (!lastWasPending)
                     _done = !_enumerator.MoveNext();
 
